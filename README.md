@@ -1,70 +1,133 @@
-# **🐊 Ivan's Style Swamp**
+# 🐊 Ivan's Style Swamp
 
-**The Official Compass High School Mascot Customizer**  
-[**🚀 Play the Live Game Here**](https://compass-high-school.github.io/ivans-style-swamp/)  
-Welcome to the swamp\! This is the interactive dress-up game for **Ivan the Gator**, the beloved mascot of Compass High School.  
-Built to be fast, fun, and full of school spirit, this app lets students, staff, and the community style Ivan for any occasion—whether it's a pep rally, graduation, or a trip to the moon.
+**The Official Compass High School Mascot Customizer**
 
-## **✨ Features**
+Welcome to the swamp! **Ivan's Style Swamp** is an interactive dress-up game for Ivan the Gator, the mascot of Compass High School. This application allows users to customize Ivan with various outfits, accessories, and backgrounds, then save their creations.
 
-* **Wardrobe System:** Mix and match hats, shirts, accessories, and handheld items.  
-* **Dynamic Backgrounds:** Transport Ivan from the Bayou to the Classroom or the Disco.  
-* **Expression Engine:** Change Ivan's mood (Happy, Cool, Surprised, Silly).  
-* **Snapshot Mode:** One-click save feature to download your creation as a PNG.  
-* **Custom Uploads:** Upload your own "Base Ivan" to test new artwork instantly.  
-* **Mobile First:** Works perfectly on phones and Chromebooks.
+[**🚀 Play the Live Game Here**](https://compass-high-school.github.io/ivans-style-swamp/)
 
-## **🎨 For Designers: How to Add New Items**
+---
 
-We love new outfits\! If you are designing new clothes for Ivan, please follow these **"Paper Doll" rules** so they fit perfectly in the code.
+## 🚀 Tech Stack
 
-### **The Golden Rule: 1080x1080**
+- **Framework:** [React 19](https://react.dev/)
+- **Build Tool:** [Vite 7](https://vitejs.dev/) (utilizing `import.meta.glob` for dynamic asset loading)
+- **Styling:** [Tailwind CSS 3](https://tailwindcss.com/)
+- **Icons:** [Lucide React](https://lucide.dev/)
+- **Deployment:** GitHub Pages
 
-Every image file must be the **exact same dimension**, even if the item is small (like a monocle).
+---
 
-1. **Canvas Size:** Set your artboard to 1080px (width) x 1080px (height).  
-2. **Positioning:** Draw the item exactly where it should sit on Ivan's body relative to the center.  
-3. **Export:** Hide the Ivan body layer and export the **full transparent canvas**.
+## 📂 Project Structure
 
-*Do not crop the image to the item\! The code relies on stacking full-size images on top of each other.*
+```text
+├── public/              # Static assets (favicon, etc.)
+├── src/
+│   ├── assets/          # Layered PNG assets organized by category
+│   │   ├── base/        # The base character (Ivan)
+│   │   ├── face/        # Expressions (Happy, Cool, etc.)
+│   │   ├── legs/        # Pants and lower body items
+│   │   ├── body/        # Shirts and upper body items
+│   │   ├── accessory/   # Extra items (Glasses, necklaces, etc.)
+│   │   ├── head/        # Hats and headwear
+│   │   ├── hand/        # Handheld items
+│   │   └── bg/          # Background images
+│   ├── App.jsx          # Main application logic and UI
+│   ├── App.css          # App-specific styles
+│   ├── index.css        # Global Tailwind styles
+│   └── main.jsx         # Entry point
+├── tailwind.config.js   # Tailwind configuration
+└── vite.config.js       # Vite configuration
+```
 
-### **File Naming**
+---
 
-Please use lowercase and underscores:
+## ⚙️ How It Works
 
-* hat\_propeller.png  
-* shirt\_jersey\_blue.png  
-* hand\_pizza.png
+### 1. Dynamic Asset Loading
+The app uses Vite's `import.meta.glob` to automatically discover and load images from the `src/assets/` subdirectories. This means adding a new item is as simple as dropping a file into the correct folder.
 
-## **💻 For Developers: getting Started**
+```javascript
+const rawBody = import.meta.glob('./assets/body/*.{png,jpg,jpeg,webp}', { eager: true });
+```
 
-This project is built with **React**, **Vite**, and **Tailwind CSS**.
+The `processAssets` helper function cleans up filenames (removing numbers and underscores) to create user-friendly labels in the UI.
 
-### **1\. Clone & Install**
+### 2. The Layering Engine (`IvanRenderer`)
+Ivan is rendered by stacking transparent PNGs on top of each other. The order of rendering in the `IvanRenderer` component determines the "Z-index" of the clothes. The current order is:
+1. **Base** (Ivan himself)
+2. **Face** (Expressions)
+3. **Legs** (Pants)
+4. **Body** (Shirts)
+5. **Accessories** (Multi-layered)
+6. **Head** (Hats)
+7. **Hand** (Handhelds)
 
-git clone \[https://github.com/compass-high-school/ivans-style-swamp.git\](https://github.com/compass-high-school/ivans-style-swamp.git)  
-cd ivan-customizer  
+### 3. State Management
+The `outfit` state object tracks which asset is currently selected for each category.
+- **Single-select:** Categories like `body` or `head` only allow one item at a time.
+- **Multi-select:** The `accessory` category allows multiple items to be equipped simultaneously.
+- **Mandatory:** The `face` category always has an item equipped (it defaults to "Cool" and cannot be unequipped, only swapped).
+
+---
+
+## 🎨 Adding New Content
+
+### Asset Requirements
+To ensure items line up perfectly, designers must follow these "Paper Doll" rules:
+- **Dimensions:** 1080x1080 pixels (Square).
+- **Format:** Transparent PNG (or WebP).
+- **Positioning:** Draw the item in its correct position relative to Ivan's body. **Do not crop the image to the item**; export the full 1080x1080 canvas with transparency.
+
+### Adding a New Item
+1. Place your PNG in the appropriate folder under `src/assets/` (e.g., `src/assets/head/`).
+2. The app will automatically detect it and create a button in the UI using the filename (e.g., `party_hat.png` becomes "Party Hat").
+
+### Adding a New Category
+To add a new layer (e.g., "Shoes"):
+1. Create a folder: `src/assets/shoes/`.
+2. Update `App.jsx`:
+   - Add a new `import.meta.glob` for `rawShoes`.
+   - Add `shoes` to the `ASSETS` object.
+   - Add a `SHOES` entry to the `CATEGORIES` constant.
+   - Add `shoes: null` to the `outfit` state in `IvanCustomizer`.
+   - Update the `IvanRenderer` component to include the new layer:
+     ```jsx
+     {outfit.shoes && <img src={outfit.shoes} className="..." />}
+     ```
+
+---
+
+## 🛠 Development
+
+### 1. Installation
+```bash
 npm install
+```
 
-### **2\. Run Locally**
-
-Start the development server:  
+### 2. Local Development
+```bash
 npm run dev
+```
 
-Open the link provided (usually http://localhost:5173) to see the Gator in action.
+### 3. Linting
+```bash
+npm run lint
+```
 
-### **3\. Deploy**
+### 4. Build & Deployment
+To build the project:
+```bash
+npm run build
+```
 
-This project is configured for **GitHub Pages**. To update the live site:  
+The project is configured to deploy to GitHub Pages via the `gh-pages` package:
+```bash
 npm run deploy
+```
+*Note: Ensure `vite.config.js` has the correct `base` property set to your repository name (currently set to `ivans-style-swamp`).*
 
-## **🛠 Tech Stack**
+---
 
-* **Framework:** React 18  
-* **Build Tool:** Vite (Super fast\!)  
-* **Styling:** Tailwind CSS  
-* **Icons:** Lucide React
-
-### **💚 Compass High School Spirit**
-
-*Go Navigators\!*
+## 💚 Compass High School
+*Go Navigators!*
