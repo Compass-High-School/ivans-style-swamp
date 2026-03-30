@@ -103,6 +103,23 @@ export default function IvanCustomizer() {
   const [flash, setFlash] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [customImage, setCustomImage] = useState(null);
+  const [confettiParticles, setConfettiParticles] = useState([]);
+
+  useEffect(() => {
+    if (showConfetti) {
+      const particles = [...Array(40)].map((_, i) => ({
+        id: i,
+        top: `${Math.random() * 80 + 10}%`,
+        left: `${Math.random() * 80 + 10}%`,
+        color: ['#facc15', '#ef4444', '#3b82f6', '#22c55e'][Math.floor(Math.random() * 4)],
+        duration: `${0.5 + Math.random()}s`,
+        delay: `${Math.random() * 0.2}s`
+      }));
+      setConfettiParticles(particles);
+    } else {
+      setConfettiParticles([]);
+    }
+  }, [showConfetti]);
 
   // --- INITIAL DEFAULTS ---
   useEffect(() => {
@@ -225,16 +242,16 @@ export default function IvanCustomizer() {
         {/* CONFETTI LAYER */}
         {showConfetti && (
           <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden">
-            {[...Array(40)].map((_, i) => (
+            {confettiParticles.map((p) => (
               <div
-                key={i}
+                key={p.id}
                 className="absolute w-2 h-2 rounded-full animate-ping opacity-75"
                 style={{
-                  top: `${Math.random() * 80 + 10}%`,
-                  left: `${Math.random() * 80 + 10}%`,
-                  backgroundColor: ['#facc15', '#ef4444', '#3b82f6', '#22c55e'][Math.floor(Math.random() * 4)],
-                  animationDuration: `${0.5 + Math.random()}s`,
-                  animationDelay: `${Math.random() * 0.2}s`
+                  top: p.top,
+                  left: p.left,
+                  backgroundColor: p.color,
+                  animationDuration: p.duration,
+                  animationDelay: p.delay
                 }}
               />
             ))}
