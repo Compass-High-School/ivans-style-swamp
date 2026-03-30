@@ -217,17 +217,58 @@ export default function IvanCustomizer() {
     setCustomImage(null);
   };
 
-  const handleSnapshot = () => {
+  const handleSnapshot = async () => {
     setFlash(true);
     setShowConfetti(true);
     setTimeout(() => setFlash(false), 200);
     setTimeout(() => setShowConfetti(false), 2500);
-    // Real download logic usually happens here
-    alert("Snapshot saved!");
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 1080;
+    canvas.height = 1920;
+    const ctx = canvas.getContext("2d");
+
+    // Order matters: Base -> Face -> Legs -> Body -> Accessories -> Head -> Hand
+    const layers = [
+      customImage || (ASSETS.base.length > 0 ? ASSETS.base[0].src : null),
+      outfit.face,
+      outfit.legs,
+      outfit.body,
+      ...outfit.accessory,
+      outfit.head,
+      outfit.hand
+    ].filter(Boolean);
+
+    try {
+      const loadedImages = await Promise.all(layers.map((src, index) => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => resolve({ img, index });
+          img.onerror = reject;
+          img.src = src;
+        });
+      }));
+      
+      loadedImages.sort((a, b) => a.index - b.index);
+      loadedImages.forEach(({ img }) => {
+        ctx.drawImage(img, 0, 0, 1080, 1920);
+      });
+      
+      const link = document.createElement('a');
+      link.download = `ivan-outfit-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error("Failed to generate snapshot", err);
+      alert("Snapshot complete but auto-download failed. Please check console.");
+    }
   };
 
   const handleFileUpload = (e) => {
-    if (e.target.files[0]) setCustomImage(URL.createObjectURL(e.target.files[0]));
+    if (e.target.files && e.target.files[0]) {
+      setCustomImage(URL.createObjectURL(e.target.files[0]));
+    }
   };
 
   const currentBgStyle = outfit.bg 
@@ -235,9 +276,9 @@ export default function IvanCustomizer() {
     : { background: 'linear-gradient(to bottom, #115e59, #14532d)' };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-2 md:p-6 font-sans text-slate-100">
+    <div className="h-full w-full bg-slate-900 flex flex-col items-center justify-center p-0 md:p-6 font-sans text-slate-100 overflow-hidden">
       
-      <div className="max-w-5xl w-full bg-slate-800 md:rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-slate-700 h-[95vh] md:h-auto relative">
+      <div className="w-full max-w-5xl h-full md:h-[80vh] min-h-[600px] bg-slate-800 md:rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-slate-700 relative">
         
         {/* CONFETTI LAYER */}
         {showConfetti && (
@@ -258,58 +299,79 @@ export default function IvanCustomizer() {
           </div>
         )}
 
+        {/* MOBILE HEADER BAR */}
+        <div className="md:hidden flex justify-between items-center p-3 bg-slate-800 border-b border-slate-700 z-10 shrink-0 shadow-sm w-full">
+          <div className="flex flex-col">
+            <h1 className="text-lg font-black text-white leading-none tracking-tight">Ivan Customizer</h1>
+            <p className="text-[#7FFF00] text-[10px] font-bold uppercase tracking-wider mt-1">Compass High School</p>
+          </div>
+          <div className="flex items-center gap-1">
+             <label className="p-2 bg-slate-700 text-slate-200 hover:bg-slate-600 rounded-lg cursor-pointer active:scale-95 transition-all">
+               <Upload size={16}/>
+               <input type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
+             </label>
+             <button onClick={handleReset} className="p-2 bg-slate-700 text-slate-200 hover:bg-slate-600 rounded-lg active:scale-95 transition-all"><RefreshCw size={16}/></button>
+             <button onClick={handleSnapshot} className="px-3 py-2 flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg active:scale-95 transition-all shadow-md ml-1">
+               <Camera size={16}/>
+               <span className="text-xs font-bold">Snap</span>
+             </button>
+          </div>
+        </div>
+
         {/* LEFT: STAGE */}
         <div 
-          className="relative w-full md:w-1/2 h-1/2 md:h-[600px] transition-all duration-500 flex items-end justify-center overflow-hidden p-4 md:p-8 shrink-0"
+          className="relative w-full md:w-1/2 h-[42vh] md:h-full transition-all flex items-end justify-center overflow-hidden p-2 md:p-8 shrink-0 border-b md:border-b-0 border-slate-700"
           style={currentBgStyle}
         >
           <div className={`absolute inset-0 bg-white z-40 pointer-events-none transition-opacity duration-200 ${flash ? 'opacity-100' : 'opacity-0'}`} />
           
-          <div className="relative w-auto h-full aspect-[1080/1920] transition-transform duration-300 hover:scale-[1.02]">
+          <div className="relative w-auto h-full aspect-[1080/1920] transition-transform duration-300 hover:scale-[1.02] drop-shadow-2xl">
             <IvanRenderer outfit={outfit} customImage={customImage} />
           </div>
 
-          <div className="md:hidden absolute top-4 right-4 flex gap-2">
-            <button onClick={handleRandomize} className="bg-white/20 backdrop-blur-md p-2 rounded-full active:scale-95"><Dices size={20} /></button>
-            <button onClick={handleSnapshot} className="bg-white/20 backdrop-blur-md p-2 rounded-full active:scale-95"><Camera size={20} /></button>
+          {/* Quick Randomize floating button on mobile Stage */}
+          <div className="md:hidden absolute top-3 right-3 flex gap-2 z-20">
+            <button onClick={handleRandomize} className="bg-white/20 backdrop-blur-md p-2.5 rounded-full active:scale-95 border border-white/30 text-white shadow-lg"><Dices size={20} /></button>
           </div>
         </div>
 
         {/* RIGHT: WARDROBE UI */}
-        <div className="w-full md:w-1/2 flex flex-col bg-slate-800 h-1/2 md:h-auto border-l border-slate-700">
+        <div className="w-full md:w-1/2 flex flex-col bg-slate-800 flex-1 md:border-l border-slate-700 overflow-hidden">
           
-          <div className="hidden md:flex p-6 border-b border-slate-700 justify-between items-center bg-slate-800">
+          <div className="hidden md:flex p-6 border-b border-slate-700 justify-between items-center bg-slate-800 shrink-0">
             <div>
               <h1 className="text-2xl font-bold text-white">Ivan Customizer</h1>
-              <p className="text-slate-400 text-sm">Compass High School</p>
+              <p className="text-[#7FFF00] text-sm font-semibold uppercase tracking-wide mt-1">Compass High School</p>
             </div>
             <div className="flex gap-2">
-               <label className="p-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg cursor-pointer transition" title="Upload Base">
-                 <Upload size={20} />
+               <label className="p-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg cursor-pointer transition active:scale-95 flex items-center gap-2" title="Upload Base">
+                 <Upload size={18} />
+                 <span className="text-sm">Base</span>
                  <input type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
                </label>
-               <button onClick={handleRandomize} className="p-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition"><Dices size={20} /></button>
-               <button onClick={handleReset} className="p-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition"><RefreshCw size={20} /></button>
-               <button onClick={handleSnapshot} className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded-lg shadow-lg transition active:scale-95">
+               <button onClick={handleRandomize} className="p-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition active:scale-95" title="Randomize"><Dices size={20} /></button>
+               <button onClick={handleReset} className="p-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition active:scale-95" title="Reset"><RefreshCw size={20} /></button>
+               <button onClick={handleSnapshot} className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded-lg shadow-lg transition active:scale-95 ml-2">
                  <Download size={18} /> <span className="text-sm font-bold">Save</span>
                </button>
             </div>
           </div>
 
-          <div className="flex p-3 gap-2 overflow-x-auto border-b border-slate-700 no-scrollbar shrink-0 bg-slate-800">
+          {/* Category Tabs */}
+          <div className="flex p-2 md:p-4 gap-2 overflow-x-auto border-b border-slate-700 no-scrollbar shrink-0 bg-slate-800/90 shadow-inner w-full">
             {Object.entries(CATEGORIES).map(([key, catConfig]) => (
               <button
                 key={key}
                 onClick={() => setActiveCategory(catConfig.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all text-sm md:text-base ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all text-sm font-medium ${
                   activeCategory === catConfig.id 
-                    ? 'bg-[#7FFF00] text-slate-900 font-bold shadow-lg' 
+                    ? 'bg-[#7FFF00] text-slate-900 font-bold shadow-md scale-105' 
                     : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                 }`}
               >
                 <span className="capitalize">{catConfig.label}</span>
                 {ASSETS[catConfig.id]?.length > 0 && (
-                  <span className="bg-black/20 px-2 rounded-full text-xs opacity-60 ml-2">
+                  <span className="bg-black/20 px-1.5 py-0.5 rounded-full text-[10px] font-bold opacity-80 ml-1">
                     {ASSETS[catConfig.id].length}
                   </span>
                 )}
@@ -317,23 +379,28 @@ export default function IvanCustomizer() {
             ))}
           </div>
 
-          <div className="flex-1 p-4 md:p-6 overflow-y-auto bg-slate-800">
+          {/* Items Grid */}
+          <div className="flex-1 p-3 md:p-6 overflow-y-auto bg-slate-800 no-scrollbar">
             {ASSETS[activeCategory].length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-slate-500 opacity-60">
                 <p>No items found in</p>
                 <code className="text-xs bg-black/30 p-1 rounded mt-1">src/assets/{activeCategory}/</code>
               </div>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 md:gap-4">
+              <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 pb-12 md:pb-4">
                 
                 {/* None Button (Hidden for Face + Accessory) */}
                 {(activeCategory !== 'accessory' && activeCategory !== 'face') && (
                   <button
                     onClick={() => handleEquip(activeCategory, null)}
-                    className={`aspect-square rounded-xl flex flex-col items-center justify-center gap-1 border-2 border-slate-600 hover:bg-slate-700 text-slate-400`}
+                    className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1 transform transition-transform active:scale-95 ${
+                      !outfit[activeCategory]
+                        ? 'border-2 border-red-400 bg-red-400/10 text-red-300'
+                        : 'border-2 border-slate-600 hover:bg-slate-700 text-slate-400'
+                    }`}
                   >
-                    <X size={24} />
-                    <span className="text-[10px]">None</span>
+                    <X size={24} className={!outfit[activeCategory] ? 'text-red-400 opacity-80' : 'opacity-50'} />
+                    <span className="text-[10px] font-bold opacity-80">NONE</span>
                   </button>
                 )}
 
@@ -346,24 +413,24 @@ export default function IvanCustomizer() {
                     <button
                       key={item.id}
                       onClick={() => handleEquip(activeCategory, item.src)}
-                      className={`aspect-square rounded-xl flex flex-col items-center justify-between p-2 transition-all relative group overflow-hidden ${
+                      className={`aspect-square rounded-2xl flex flex-col items-center justify-between p-2 transition-all relative group overflow-hidden active:scale-95 ${
                         isSelected
-                          ? 'bg-slate-700 border-2 border-[#7FFF00] shadow-lg' 
-                          : 'bg-slate-700 border-2 border-transparent hover:bg-slate-600'
+                          ? 'bg-slate-700 border-2 border-[#7FFF00] shadow-[0_0_15px_rgba(127,255,0,0.15)] scale-[1.02]' 
+                          : 'bg-slate-700 border-2 border-transparent hover:bg-slate-600 hover:border-slate-500'
                       }`}
                     >
                       {/* Checkmark for Multi-Select */}
                       {isSelected && activeCategory === 'accessory' && (
-                        <div className="absolute top-2 right-2 bg-[#7FFF00] rounded-full p-1 shadow-md z-10">
-                          <Check size={12} className="text-slate-900" />
+                        <div className="absolute top-1.5 right-1.5 bg-[#7FFF00] rounded-full p-0.5 shadow-md z-10 transition-transform zoom-in">
+                          <Check size={10} className="text-slate-900 font-bold" />
                         </div>
                       )}
 
-                      <div className="w-full h-2/3 flex items-center justify-center">
-                         <img src={item.src} className="max-w-full max-h-full object-contain drop-shadow-md" />
+                      <div className="w-full h-3/4 flex items-center justify-center p-1">
+                         <img src={item.src} className="max-w-full max-h-full object-contain drop-shadow-lg transition-transform group-hover:scale-110 duration-300" />
                       </div>
                       
-                      <span className={`text-[10px] md:text-xs font-medium truncate w-full text-center ${isSelected ? 'text-[#7FFF00]' : 'text-slate-300'}`}>
+                      <span className={`text-[9px] md:text-xs font-semibold truncate w-full text-center mt-1 pb-1 ${isSelected ? 'text-[#7FFF00]' : 'text-slate-300'}`}>
                         {item.name}
                       </span>
                     </button>
@@ -373,8 +440,8 @@ export default function IvanCustomizer() {
             )}
           </div>
           
-          <div className="p-3 bg-slate-900/50 text-center text-[10px] md:text-xs text-slate-500 shrink-0">
-            Compass High School • Go Navigators!
+          <div className="p-2 md:p-3 bg-slate-900/80 text-center text-[10px] md:text-xs text-slate-400 shrink-0 font-medium border-t border-slate-700/50">
+            Compass High School Navigators
           </div>
 
         </div>
