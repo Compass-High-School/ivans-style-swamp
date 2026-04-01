@@ -51,23 +51,35 @@ The app uses Vite's `import.meta.glob` to automatically discover and load images
 const rawBody = import.meta.glob('./assets/body/*.{png,jpg,jpeg,webp}', { eager: true });
 ```
 
-The `processAssets` helper function cleans up filenames (removing numbers and underscores) to create user-friendly labels in the UI.
+The `processAssets` helper function cleans up filenames:
+- Removes leading numbers and underscores (e.g., `01_shirt.png` becomes "Shirt").
+- Capitalizes each word.
+- Converts underscores and hyphens to spaces.
 
 ### 2. The Layering Engine (`IvanRenderer`)
-Ivan is rendered by stacking transparent PNGs on top of each other. The order of rendering in the `IvanRenderer` component determines the "Z-index" of the clothes. The current order is:
-1. **Base** (Ivan himself)
-2. **Face** (Expressions)
+Ivan is rendered by stacking transparent PNGs. The order of rendering in the `IvanRenderer` component determines the "Z-index" of the items. The current order is:
+1. **Base** (The gator himself or a custom uploaded image)
+2. **Face** (Expressions - Mandatory)
 3. **Legs** (Pants)
-4. **Body** (Shirts)
-5. **Accessories** (Multi-layered)
-6. **Head** (Hats)
-7. **Hand** (Handhelds)
+4. **Body** (Shirts/Tops)
+5. **Accessories** (Multiple items allowed)
+6. **Head** (Hats/Headwear)
+7. **Hand** (Handheld items)
 
-### 3. State Management
-The `outfit` state object tracks which asset is currently selected for each category.
-- **Single-select:** Categories like `body` or `head` only allow one item at a time.
+### 3. State Management & Features
+- **Mandatory Layers:** The `face` category always has an item equipped (defaults to "Cool") and cannot be unequipped, only swapped.
 - **Multi-select:** The `accessory` category allows multiple items to be equipped simultaneously.
-- **Mandatory:** The `face` category always has an item equipped (it defaults to "Cool" and cannot be unequipped, only swapped).
+- **Randomize:** A "Dices" button generates a random outfit combinations with weighted logic (e.g., face is always selected, backgrounds have a 90% chance, others 70%).
+- **Snapshot (Save):** The "Save" button uses a hidden HTML5 Canvas to composite all layers into a high-resolution **1080x1920** (Portrait) PNG. It includes a "Flash" effect and "Confetti" animation when triggered.
+- **Custom Base Upload:** Users can upload their own "Base" image (replacing Ivan) to see how clothes look on different characters or backgrounds.
+
+---
+
+## 📱 Mobile Experience
+The application is fully responsive:
+- **Mobile Header:** A compact header with quick access to Upload, Reset, and Snap (Save).
+- **Floating Randomize:** A dedicated floating action button on the stage for quick style changes.
+- **Optimized Grids:** Item selection grids adapt from 4 columns on mobile to 3-4 on desktop.
 
 ---
 
@@ -75,13 +87,14 @@ The `outfit` state object tracks which asset is currently selected for each cate
 
 ### Asset Requirements
 To ensure items line up perfectly, designers must follow these "Paper Doll" rules:
-- **Dimensions:** 1080x1080 pixels (Square).
-- **Format:** Transparent PNG (or WebP).
+- **Dimensions:** **1080x1080** pixels (Square).
+- **Format:** Transparent PNG (recommended) or WebP.
 - **Positioning:** Draw the item in its correct position relative to Ivan's body. **Do not crop the image to the item**; export the full 1080x1080 canvas with transparency.
+- **Naming:** Use clear names like `red_shirt.png`. Leading numbers (e.g., `01_hat.png`) can be used to control the sorting order in the UI.
 
 ### Adding a New Item
 1. Place your PNG in the appropriate folder under `src/assets/` (e.g., `src/assets/head/`).
-2. The app will automatically detect it and create a button in the UI using the filename (e.g., `party_hat.png` becomes "Party Hat").
+2. The app will automatically detect it and create a button in the UI.
 
 ### Adding a New Category
 To add a new layer (e.g., "Shoes"):
@@ -91,10 +104,8 @@ To add a new layer (e.g., "Shoes"):
    - Add `shoes` to the `ASSETS` object.
    - Add a `SHOES` entry to the `CATEGORIES` constant.
    - Add `shoes: null` to the `outfit` state in `IvanCustomizer`.
-   - Update the `IvanRenderer` component to include the new layer:
-     ```jsx
-     {outfit.shoes && <img src={outfit.shoes} className="..." />}
-     ```
+   - Update the `IvanRenderer` component to include the new layer at the desired depth.
+   - Update `handleSnapshot` to include the new layer in the canvas composite.
 
 ---
 
