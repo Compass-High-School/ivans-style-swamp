@@ -389,13 +389,13 @@ export default function IvanCustomizer() {
                 <code className="text-xs bg-black/30 p-1 rounded mt-1">src/assets/{activeCategory}/</code>
               </div>
             ) : (
-              <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 pb-12 md:pb-4">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 pb-12 md:pb-4">
                 
                 {/* None Button (Hidden for Mandatory Layers and Accessory) */}
                 {(activeCategory !== 'accessory' && !['face', 'legs', 'body'].includes(activeCategory)) && (
                   <button
                     onClick={() => handleEquip(activeCategory, null)}
-                    className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1 transform transition-transform active:scale-95 ${
+                    className={`aspect-[4/5] md:aspect-square rounded-2xl flex flex-col items-center justify-center gap-1 transform transition-transform active:scale-95 ${
                       !outfit[activeCategory]
                         ? 'border-2 border-red-400 bg-red-400/10 text-red-300'
                         : 'border-2 border-slate-600 hover:bg-slate-700 text-slate-400'
@@ -415,10 +415,10 @@ export default function IvanCustomizer() {
                     <button
                       key={item.id}
                       onClick={() => handleEquip(activeCategory, item.src)}
-                      className={`aspect-square rounded-2xl flex flex-col items-center justify-between p-2 transition-all relative group overflow-hidden active:scale-95 ${
+                      className={`aspect-[4/5] md:aspect-square rounded-2xl flex flex-col items-center justify-between p-2 transition-all duration-200 relative group overflow-hidden active:scale-95 ${
                         isSelected
                           ? 'bg-slate-700 border-2 border-[#7FFF00] shadow-[0_0_15px_rgba(127,255,0,0.15)] scale-[1.02]' 
-                          : 'bg-slate-700 border-2 border-transparent hover:bg-slate-600 hover:border-slate-500'
+                          : 'bg-slate-700 border-2 border-transparent hover:bg-slate-600 hover:border-slate-500 transform-gpu'
                       }`}
                     >
                       {/* Checkmark for Multi-Select */}
@@ -428,11 +428,11 @@ export default function IvanCustomizer() {
                         </div>
                       )}
 
-                      <div className="w-full h-3/4 flex items-center justify-center p-1">
-                         <img src={item.src} className="max-w-full max-h-full object-contain drop-shadow-lg transition-transform group-hover:scale-110 duration-300" />
+                      <div className="w-full h-[65%] md:h-3/4 flex items-center justify-center p-1">
+                         <img src={item.src} className="max-w-full max-h-full object-contain transition-transform group-hover:scale-110 duration-200 transform-gpu" />
                       </div>
                       
-                      <span className={`text-[9px] md:text-xs font-semibold truncate w-full text-center mt-1 pb-1 ${isSelected ? 'text-[#7FFF00]' : 'text-slate-300'}`}>
+                      <span className={`text-[11px] leading-tight md:text-xs font-semibold w-full text-center mt-1 pb-1 px-1 ${isSelected ? 'text-[#7FFF00]' : 'text-slate-300'}`}>
                         {item.name}
                       </span>
                     </button>
