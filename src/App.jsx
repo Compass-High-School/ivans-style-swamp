@@ -141,12 +141,12 @@ export default function IvanCustomizer() {
   }, []);
 
   const handleEquip = (category, src) => {
-    // 1. MANDATORY FACE CHECK
-    if (category === 'face') {
-      // If user clicks the currently equipped face, DO NOTHING (prevent unequip)
-      if (outfit.face === src) return;
-      // Otherwise, swap to new face
-      setOutfit(prev => ({ ...prev, face: src }));
+    // 1. MANDATORY CATEGORIES CHECK (Face, Legs, Body)
+    if (['face', 'legs', 'body'].includes(category)) {
+      // If user clicks the currently equipped item, DO NOTHING (prevent unequip)
+      if (outfit[category] === src) return;
+      // Otherwise, swap to new item
+      setOutfit(prev => ({ ...prev, [category]: src }));
       return;
     }
 
@@ -177,13 +177,13 @@ export default function IvanCustomizer() {
     ['legs', 'body', 'head', 'face', 'hand', 'bg'].forEach(cat => {
       const items = ASSETS[cat];
       if (items.length > 0) {
-        // Face is mandatory (100% chance), others have varying chances
-        const chance = cat === 'face' ? 1.0 : (cat === 'bg' ? 0.9 : 0.7);
+        // Face, legs, and body are mandatory (100% chance), others have varying chances
+        const chance = (cat === 'face' || cat === 'legs' || cat === 'body') ? 1.0 : (cat === 'bg' ? 0.9 : 0.7);
         
         if (Math.random() < chance) {
           newOutfit[cat] = items[Math.floor(Math.random() * items.length)].src;
-        } else if (cat !== 'face') {
-          // Don't clear face, only others
+        } else if (cat !== 'face' && cat !== 'legs' && cat !== 'body') {
+          // Don't clear mandatory layers
           newOutfit[cat] = null;
         }
       }
@@ -208,9 +208,11 @@ export default function IvanCustomizer() {
   const handleReset = () => {
     const coolFace = ASSETS.face.find(a => a.name.toLowerCase().includes('cool')) || ASSETS.face[0];
     const schoolBg = ASSETS.bg.find(a => a.name.toLowerCase().includes('school')) || ASSETS.bg[0];
+    const randomLegs = ASSETS.legs.length > 0 ? ASSETS.legs[Math.floor(Math.random() * ASSETS.legs.length)].src : null;
+    const randomBody = ASSETS.body.length > 0 ? ASSETS.body[Math.floor(Math.random() * ASSETS.body.length)].src : null;
     
     setOutfit({ 
-      legs: null, body: null, accessory: [], head: null, hand: null,
+      legs: randomLegs, body: randomBody, accessory: [], head: null, hand: null,
       face: coolFace ? coolFace.src : (ASSETS.face[0]?.src || null),
       bg: schoolBg ? schoolBg.src : null 
     });
@@ -389,8 +391,8 @@ export default function IvanCustomizer() {
             ) : (
               <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 pb-12 md:pb-4">
                 
-                {/* None Button (Hidden for Face + Accessory) */}
-                {(activeCategory !== 'accessory' && activeCategory !== 'face') && (
+                {/* None Button (Hidden for Mandatory Layers and Accessory) */}
+                {(activeCategory !== 'accessory' && !['face', 'legs', 'body'].includes(activeCategory)) && (
                   <button
                     onClick={() => handleEquip(activeCategory, null)}
                     className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1 transform transition-transform active:scale-95 ${
