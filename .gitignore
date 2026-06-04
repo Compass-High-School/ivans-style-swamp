@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Raw art-delivery drop (Illustrator source). Background PNGs from this drop
+# were integrated into src/assets/bg/; the .ai source is kept local, out of git.
+/Ivan Customizer Game_2192026_V3/
