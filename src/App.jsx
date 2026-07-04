@@ -65,24 +65,24 @@ const IvanRenderer = ({ outfit, customImage }) => {
       )}
 
       {/* 2. Face (Expression) - Mandatory */}
-      {outfit.face && <img src={outfit.face} className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none" />}
+      {outfit.face && <img src={outfit.face} alt="" className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none" />}
 
       {/* 3. Legs (Pants) */}
-      {outfit.legs && <img src={outfit.legs} className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none" />}
-      
+      {outfit.legs && <img src={outfit.legs} alt="" className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none" />}
+
       {/* 4. Body (Shirts) */}
-      {outfit.body && <img src={outfit.body} className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none" />}
-      
+      {outfit.body && <img src={outfit.body} alt="" className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none" />}
+
       {/* 5. Accessories (Multi-Layer) */}
       {outfit.accessory.map((src) => (
-        <img key={src} src={src} className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none" />
+        <img key={src} src={src} alt="" className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none" />
       ))}
-      
+
       {/* 6. Head (Hats) */}
-      {outfit.head && <img src={outfit.head} className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none" />}
+      {outfit.head && <img src={outfit.head} alt="" className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none" />}
 
       {/* 7. Hand */}
-      {outfit.hand && <img src={outfit.hand} className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none" />}
+      {outfit.hand && <img src={outfit.hand} alt="" className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none" />}
     </div>
   );
 };
@@ -214,8 +214,9 @@ export default function IvanCustomizer() {
     setOutfit({ 
       legs: randomLegs, body: randomBody, accessory: [], head: null, hand: null,
       face: coolFace ? coolFace.src : (ASSETS.face[0]?.src || null),
-      bg: schoolBg ? schoolBg.src : null 
+      bg: schoolBg ? schoolBg.src : null
     });
+    if (customImage) URL.revokeObjectURL(customImage);
     setCustomImage(null);
   };
 
@@ -269,6 +270,7 @@ export default function IvanCustomizer() {
 
   const handleFileUpload = (e) => {
     if (e.target.files && e.target.files[0]) {
+      if (customImage) URL.revokeObjectURL(customImage);
       setCustomImage(URL.createObjectURL(e.target.files[0]));
     }
   };
@@ -429,7 +431,7 @@ export default function IvanCustomizer() {
                       )}
 
                       <div className="w-full h-[65%] md:h-3/4 flex items-center justify-center p-1">
-                         <img src={item.src} className="max-w-full max-h-full object-contain transition-transform group-hover:scale-110 duration-200 transform-gpu" />
+                         <img src={item.src} alt="" className="max-w-full max-h-full object-contain transition-transform group-hover:scale-110 duration-200 transform-gpu" />
                       </div>
                       
                       <span className={`text-[11px] leading-tight md:text-xs font-semibold w-full text-center mt-1 pb-1 px-1 ${isSelected ? 'text-[#7FFF00]' : 'text-slate-300'}`}>
