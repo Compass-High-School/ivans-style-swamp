@@ -27,6 +27,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Build and test tools execute in CI, so audit development dependencies too.
+      - name: Check dependency security
+        run: npm audit --audit-level=high
+
       - name: Run linter
         run: npm run lint
 
